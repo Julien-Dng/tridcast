@@ -1,0 +1,12 @@
+import type { GeneratedPrompt, WalkthroughRenderPlan, WalkthroughSegment } from "@/domain/real-estate-walkthrough";
+export type SegmentAttempt={attempt:number;prompt:GeneratedPrompt;status:WalkthroughSegment["status"];outputUrl?:string;error?:string};
+export class WalkthroughExecution {
+ readonly attempts=new Map<string,SegmentAttempt[]>(); readonly webhookEvents=new Set<string>(); compositionStatus:"pending"|"processing"|"completed"|"failed"="pending"; outputUrl?:string;
+ constructor(public plan:WalkthroughRenderPlan,private readonly prompts:Map<string,GeneratedPrompt>){for(const segment of plan.segments)this.attempts.set(segment.id,[])}
+ start(segmentId:string){const segment=this.segment(segmentId);if(!["pending","failed"].includes(segment.status))throw new Error("Cette séquence ne peut pas être relancée");const prompt=this.prompts.get(segmentId);if(!prompt)throw new Error("Prompt versionné introuvable");segment.status="queued";const attempts=this.attempts.get(segmentId)!;attempts.push({attempt:attempts.length+1,prompt,status:"queued"});return attempts.at(-1)!}
+ complete(segmentId:string,outputUrl:string,eventId:string){if(this.webhookEvents.has(eventId))return false;this.webhookEvents.add(eventId);const segment=this.segment(segmentId);segment.status="completed";const attempt=this.attempts.get(segmentId)!.at(-1);if(!attempt)throw new Error("Tentative introuvable");attempt.status="completed";attempt.outputUrl=outputUrl;return true}
+ fail(segmentId:string,error:string,eventId:string){if(this.webhookEvents.has(eventId))return false;this.webhookEvents.add(eventId);const segment=this.segment(segmentId);segment.status="failed";const attempt=this.attempts.get(segmentId)!.at(-1);if(!attempt)throw new Error("Tentative introuvable");attempt.status="failed";attempt.error=error;return true}
+ async compose(compose:(urls:string[])=>Promise<string>){if(this.plan.segments.some(x=>x.status!=="completed"))throw new Error("Toutes les séquences requises doivent être terminées");this.compositionStatus="processing";try{this.outputUrl=await compose(this.plan.segments.map(s=>this.attempts.get(s.id)!.at(-1)!.outputUrl!));this.compositionStatus="completed";return this.outputUrl}catch(error){this.compositionStatus="failed";throw error}}
+ get completed(){return this.compositionStatus==="completed"&&Boolean(this.outputUrl)}
+ private segment(id:string){const value=this.plan.segments.find(x=>x.id===id);if(!value)throw new Error("Séquence inconnue");return value}
+}
