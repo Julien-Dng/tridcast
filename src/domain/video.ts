@@ -1,0 +1,21 @@
+import { z } from "zod";
+export const objectives = ["property_presentation","social_content","educational","local_market","brand_awareness"] as const;
+export const statuses = ["draft","queued","processing","composing","completed","failed","cancelled"] as const;
+export const ctaModes = ["none","logo_only","subtle","contact","social_engagement","social_follow"] as const;
+export const realEstateInputSchema = z.object({
+  vertical:z.literal("real_estate"), objective:z.enum(objectives), language:z.literal("fr").default("fr"),
+  content:z.object({transactionType:z.enum(["sale","rent"]).optional(),propertyType:z.string().min(1).optional(),title:z.string().min(3).max(140),description:z.string().max(2000).optional(),city:z.string().min(2),district:z.string().optional(),price:z.number().nonnegative().optional(),surfaceM2:z.number().positive().optional(),rooms:z.number().int().positive().optional(),bedrooms:z.number().int().nonnegative().optional(),bathrooms:z.number().int().nonnegative().optional(),floor:z.number().int().optional(),features:z.array(z.string()).max(12).default([]),highlights:z.array(z.string()).max(8).default([]),energyRating:z.enum(["A","B","C","D","E","F","G"]).optional(),additionalText:z.string().max(1000).optional()}),
+  video:z.object({format:z.enum(["9:16","1:1","16:9"]),durationSeconds:z.union([z.literal(15),z.literal(30),z.literal(45)]),templateId:z.string(),tone:z.string(),voiceOver:z.boolean(),musicStyle:z.string().optional()}),
+  callToAction:z.object({enabled:z.boolean(),mode:z.enum(ctaModes).default("none"),text:z.string().max(80).optional()}).default({enabled:false,mode:"none"})
+});
+export type RealEstateInput=z.infer<typeof realEstateInputSchema>;
+export type MediaReference={id:string;position:number;primary?:boolean};
+export type RenderScene={id:string;type:"intro"|"key_facts"|"features"|"editorial"|"brand_outro";durationSeconds:number;headline?:string;items?:string[];mediaAssetId?:string;animation?:"slow_zoom"|"pan_left"|"pan_right";showLogo?:boolean;callToAction?:string|null};
+export type RenderPlan={version:1;format:"9:16"|"1:1"|"16:9";durationSeconds:15|30|45;scenes:RenderScene[]};
+const label=(value:string)=>value.charAt(0).toUpperCase()+value.slice(1);
+export function buildRenderPlan(raw:unknown, media:MediaReference[]=[]):RenderPlan { const input=realEstateInputSchema.parse(raw); const assets=[...media].sort((a,b)=>Number(b.primary)-Number(a.primary)||a.position-b.position); let n=0; const asset=()=>assets[n++%Math.max(assets.length,1)]?.id;
+ const scenes:RenderScene[]=[{id:"intro",type:"intro",durationSeconds:4,headline:input.content.title,mediaAssetId:asset(),animation:"slow_zoom"}];
+ if(input.objective==="property_presentation"){const facts=[input.content.surfaceM2&&`${input.content.surfaceM2} m²`,input.content.rooms&&`${input.content.rooms} pièces`,input.content.bedrooms!==undefined&&`${input.content.bedrooms} chambres`].filter(Boolean) as string[]; scenes.push({id:"key-facts",type:"key_facts",durationSeconds:6,items:facts,mediaAssetId:asset(),animation:"pan_left"}); if(input.content.features.length) scenes.push({id:"features",type:"features",durationSeconds:6,items:input.content.features.map(label),mediaAssetId:asset(),animation:"slow_zoom"});} else scenes.push({id:"editorial",type:"editorial",durationSeconds:Math.max(5,input.video.durationSeconds-8),headline:input.content.description??input.content.title,mediaAssetId:asset(),animation:"pan_right"});
+ const used=scenes.reduce((s,x)=>s+x.durationSeconds,0); scenes.push({id:"outro",type:"brand_outro",durationSeconds:Math.max(3,input.video.durationSeconds-used),showLogo:input.callToAction.mode!=="none",callToAction:input.callToAction.enabled?(input.callToAction.text??"Contactez-nous"):null}); return {version:1,format:input.video.format,durationSeconds:input.video.durationSeconds,scenes}; }
+export const allowedTransitions:Record<(typeof statuses)[number],readonly (typeof statuses)[number][]>= {draft:["queued","cancelled"],queued:["processing","failed","cancelled"],processing:["composing","failed","cancelled"],composing:["completed","failed"],completed:[],failed:["queued","cancelled"],cancelled:[]};
+export function assertStatusTransition(from:(typeof statuses)[number],to:(typeof statuses)[number]){if(!allowedTransitions[from].includes(to))throw new Error(`Transition interdite : ${from} → ${to}`)}

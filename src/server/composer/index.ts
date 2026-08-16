@@ -1,0 +1,1 @@
+import type { RenderPlan } from "@/domain/video"; export type CompositionResult={outputUrl:string;thumbnailUrl:string}; export interface VideoComposer{compose(renderPlan:RenderPlan):Promise<CompositionResult>} export class MockVideoComposer implements VideoComposer{async compose(){return{outputUrl:"/demo/tridcast-demo.mp4",thumbnailUrl:"/templates/modern.svg"}}}
