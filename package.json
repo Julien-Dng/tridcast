@@ -1,1 +1,41 @@
-{"name":"tridcast","version":"0.2.0","private":true,"type":"module","engines":{"node":">=22"},"scripts":{"dev":"next dev","build":"next build","lint":"tsc --noEmit","test":"vitest run","test:e2e":"playwright test","db:generate":"drizzle-kit generate","db:migrate":"drizzle-kit migrate","db:seed":"tsx src/db/seed.ts"},"dependencies":{"bcryptjs":"^3.0.2","drizzle-orm":"^0.44.0","jose":"^6.0.0","next":"^15.4.0","postgres":"^3.4.7","react":"^19.1.0","react-dom":"^19.1.0","zod":"^4.0.0"},"devDependencies":{"@playwright/test":"^1.54.0","@types/node":"^24.0.0","@types/react":"^19.1.0","@types/react-dom":"^19.1.0","drizzle-kit":"^0.31.0","tailwindcss":"^3.4.0","tsx":"^4.20.0","typescript":"^5.9.0","vitest":"^3.2.0"}}
+{
+  "name": "tridcast",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "drizzle-orm": "^0.44.0",
+    "jose": "^6.0.0",
+    "next": "^15.4.0",
+    "postgres": "^3.4.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "autoprefixer": "^10.4.21",
+    "drizzle-kit": "^0.31.0",
+    "tailwindcss": "^3.4.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
