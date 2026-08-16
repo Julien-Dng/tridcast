@@ -1,42 +1,47 @@
 # Tridcast
 
-Socle du domaine commercial de Tridcast : catalogue IA et abonnements, estimation
-côté serveur, contrôle d'accès, portefeuille à écritures immuables et abstraction
-de paiement. Les prix et règles sont stockés dans PostgreSQL ou fournis par
-l'environnement ; l'interface cliente ne décide jamais du montant facturé.
+MVP SaaS français de génération de vidéos immobilières. Next.js App Router fournit l'interface responsive, PostgreSQL/Neon et Drizzle conservent les projets, Zod valide les entrées, et les fournisseurs vidéo/composition restent interchangeables. Le mode `VIDEO_PROVIDER=mock` n'appelle aucun service payant.
 
-## Prérequis et commandes
+## Installation
 
-- Node.js 22 ou supérieur ;
-- PostgreSQL/Neon pour appliquer `src/db/migrations/001_billing.sql`.
+Prérequis : Node.js 22+, npm et, pour la persistance, une base PostgreSQL Neon.
 
-```sh
+```bash
+cp .env.example .env.local
 npm install
-npm run dev    # exécute le point d'entrée TypeScript en mode watch
-npm test       # tests métier avec node:test
-npm run lint   # vérification TypeScript stricte
-npm run build  # compilation dans dist/
+npm run db:migrate
+npm run db:seed
+npm run dev
 ```
 
-Copier `.env.example` vers `.env`. Par défaut, utiliser `PAYMENT_PROVIDER=mock`
-et `VIDEO_PROVIDER=mock` : aucun paiement ou appel vidéo réel n'est alors émis.
-Le mock simule acceptation, refus, renouvellement, annulation, upgrade, échec de
-prélèvement et achat de crédits. Le mode Stripe exige les secrets et identifiants
-de prix listés dans le fichier d'exemple.
+Ouvrir http://localhost:3000. Le parcours visuel de démonstration fonctionne sans Neon ; les opérations persistantes nécessitent `DATABASE_URL`.
 
-## Garanties commerciales
+## Commandes
 
-- Une estimation expirante est calculée à partir des opérations réellement
-  nécessaires, d'une réserve de retry et de la marge configurée.
-- L'accès vérifie activation, palier, format, durée, résolution, solde et concurrence.
-- Le portefeuille consomme promotionnel, abonnement, puis acheté ; toute mutation
-  produit une écriture. Une réservation atomique empêche le double débit.
-- En PostgreSQL, la réservation doit s'effectuer dans une transaction avec
-  `SELECT ... FOR UPDATE` sur le portefeuille, puis créer l'écriture et le job avant
-  tout appel fournisseur.
-- La contrainte unique des événements de paiement assure l'idempotence durable des
-  webhooks. La redirection Checkout n'est jamais une preuve de paiement.
+- `npm run dev` : serveur de développement ;
+- `npm run build` : build de production ;
+- `npm run lint` : contrôle TypeScript ;
+- `npm test` : tests Vitest ;
+- `npm run test:e2e` : parcours Playwright ;
+- `npm run db:generate`, `db:migrate`, `db:seed` : cycle Drizzle/Neon.
 
-Les migrations incluent les plans Starter, Pro et Agency, une remise annuelle de
-deux mois, trois packs de crédits et les paramètres de marge modifiables. Les prix
-sont stockés en centimes hors taxes.
+## Architecture
+
+- `src/domain` : définition verticale configurable, validation et plan de rendu indépendant ;
+- `src/db` et `drizzle/` : schéma Drizzle, migration et seed ;
+- `src/server/providers` : contrats Mock/Replicate, seuls points d'accès au fournisseur ;
+- `src/server/composer` : composition séparée de la génération IA ;
+- `src/server/auth` et `storage` : session HTTP-only, isolation organisationnelle et règles médias ;
+- `src/app` : pages App Router en français.
+
+Le pipeline conserve séparément `inputData`, `renderPlan`, les `generationJobs` et l'output. Une génération passe par `queued`, `processing`, puis `composing` avant `completed`.
+
+## Neon, stockage et Replicate
+
+Créer un projet Neon, copier l'URL avec SSL dans `DATABASE_URL`, puis appliquer la migration. En production, utiliser un stockage S3 compatible et ne distribuer que des URL signées courtes ; les fichiers acceptés sont JPEG, PNG et WebP, 10 Mo maximum et 20 médias par projet.
+
+Pour Replicate, choisir `VIDEO_PROVIDER=replicate`, renseigner token, modèle/version et secret webhook. Exposer en développement `/api/webhooks/replicate` via un tunnel HTTPS. Les identifiants modèle sont de la configuration et non du domaine. Le webhook doit être vérifié avec `REPLICATE_WEBHOOK_SECRET` et son identifiant unique assure l'idempotence. Aucun secret ne porte le préfixe `NEXT_PUBLIC_`.
+
+## Limites du MVP
+
+Le compositeur et le stockage sont des ports de développement : le résultat vidéo mock est simulé. Une implémentation FFmpeg/Remotion et un adaptateur S3 signant réellement les requêtes sont les prochaines extensions. Le paiement n'est volontairement pas raccordé ; le compte de crédits prépare cette évolution.
