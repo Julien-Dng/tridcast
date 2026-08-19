@@ -7,3 +7,5 @@ dist/
 
 *.tsbuildinfo
 .next/
+.vercel
+.env*
