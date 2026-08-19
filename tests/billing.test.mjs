@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AccessDeniedError, CreditWallet, IdempotentWebhookProcessor, MockPaymentProvider, PricingConfigurationError, assertModelAccess, assertQuoteValid, calculateQuote } from "../dist/src/index.js";
+import { AccessDeniedError, CreditWallet, IdempotentWebhookProcessor, MockPaymentProvider, PricingConfigurationError, assertModelAccess, assertQuoteValid, calculateQuote } from "../src/index.ts";
 
 const model = { id: "m1", name: "Stable", qualityTier: "standard", active: true, supportedAspectRatios: ["16:9"], supportedDurations: [5], supportedResolutions: ["720p", "1080p"], estimatedProviderCost: 0.01, creditCost: 1 };
 const pro = { id: "p1", slug: "pro", maximumQualityTier: "advanced", maximumResolution: "1080p", concurrentGenerationLimit: 3 };

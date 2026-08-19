@@ -34,6 +34,36 @@ Ouvrir http://localhost:3000. Le parcours visuel de démonstration fonctionne sa
 - `src/server/auth` et `storage` : session HTTP-only, isolation organisationnelle et règles médias ;
 - `src/app` : pages App Router en français.
 
+### Authentification
+
+La connexion sans mot de passe accepte un OTP email Resend et, lorsque leurs variables sont présentes, Google et Microsoft. Les identités OAuth sont liées par `(provider, providerAccountId)` ; une nouvelle identité ne rejoint un utilisateur existant que si le fournisseur a attesté son email. Les sessions opaques sont persistées sous forme de hash et conservent l’organisation active. Les anciens cookies JWT restent lisibles pendant la transition.
+
+Appliquer `drizzle/0003_professional_auth.sql` avec `npm run db:migrate`. Cette migration rend seulement le mot de passe facultatif et ajoute comptes liés, sessions, OTP et invitations ; elle ne supprime aucune donnée.
+
+#### Resend
+
+1. Ajouter le domaine d’envoi dans Resend, puis recopier chez le fournisseur DNS les enregistrements SPF et DKIM affichés par Resend (et un DMARC adapté à la politique du domaine).
+2. Attendre que le domaine soit marqué **Verified** dans Resend.
+3. Créer une clé API limitée à l’envoi, la placer dans `RESEND_API_KEY`, puis définir `AUTH_EMAIL_FROM` avec une adresse du domaine vérifié, par exemple `Tridcast <connexion@example.com>`.
+
+Sans clé Resend, l’API renvoie une erreur explicite : aucun succès d’envoi n’est simulé, y compris en développement.
+
+#### Google Cloud et Microsoft Entra
+
+Les boutons sont automatiquement masqués si le couple client ID/secret correspondant est absent et apparaissent au prochain chargement dès que les variables sont configurées.
+
+Dans Google Cloud, configurer l’écran de consentement OAuth, créer un client **Application Web**, puis ajouter :
+
+- développement : `http://localhost:3000/api/auth/oauth/google/callback` ;
+- production : `https://VOTRE_DOMAINE/api/auth/oauth/google/callback`.
+
+Dans Microsoft Entra, créer une App Registration, ajouter une plateforme **Web**, créer un secret client, et ajouter :
+
+- développement : `http://localhost:3000/api/auth/oauth/microsoft/callback` ;
+- production : `https://VOTRE_DOMAINE/api/auth/oauth/microsoft/callback`.
+
+Renseigner `APP_URL` avec l’origine exacte correspondante (sans slash final). `MICROSOFT_TENANT_ID=common` autorise les comptes professionnels et personnels ; remplacer `common` par un tenant pour restreindre l’application. Les deux parcours demandent uniquement `openid email profile` et utilisent `state`, `nonce` et PKCE.
+
 Le pipeline conserve séparément `inputData`, `renderPlan`, les `generationJobs` et l'output. Une génération passe par `queued`, `processing`, puis `composing` avant `completed`.
 
 ### Visites immobilières multi-photos

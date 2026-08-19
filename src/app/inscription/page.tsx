@@ -1,1 +1,1 @@
-import Link from "next/link";import {Auth} from "../connexion/page";export default function Signup(){return <Auth title="Créez votre studio" action="Créer mon compte" footer={<>Déjà inscrit ? <Link className="text-brand" href="/connexion">Se connecter</Link></>}/>}
+import {redirect} from "next/navigation";export default function Signup(){redirect("/connexion")}
