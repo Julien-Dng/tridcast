@@ -16,7 +16,7 @@ export type GeneratedPrompt = { prompt:string; negativePrompt:string; metadata:{
 export const NEGATIVE_PROMPT = "Cuts, jump cuts, scene changes, teleportation, morphing transitions, crossfades, dissolves, duplicated rooms, invented rooms, added corridors, added doors, added windows, added furniture, missing furniture, redesigned architecture, changed room layout, altered decor, incorrect colors, inconsistent materials, changing lighting, warped walls, bending lines, distorted geometry, moving objects, floating furniture, impossible spatial connections, camera passing through walls, camera passing through furniture, drone movement, floating camera, excessive camera rotation, fisheye distortion, extreme wide angle, zoom effects, abrupt acceleration, camera shake, flickering, visual artifacts, people, animals, text, captions, logos, watermarks.";
 const labels:Record<(typeof roomTypes)[number],string>={exterior_front:"Exterior front",exterior_back:"Exterior back",entrance:"Main entrance",hallway:"Hallway",living_room:"Living room",dining_room:"Dining room",kitchen:"Kitchen",bedroom:"Bedroom",bathroom:"Bathroom",office:"Office",stairs:"Stairs",balcony:"Balcony",terrace:"Terrace",garden:"Garden",garage:"Garage",other:"Other space"};
 export function orderedRoute(media:WalkthroughMedia[]){return [...media].sort((a,b)=>a.metadata.position-b.metadata.position)}
-const continuousTemplate=`Using all provided property photos as visual references, generate a photorealistic, continuous first-person real estate walkthrough.
+const continuousTemplate=`Using all provided Airbnb photos as references, generate a single continuous first-person walkthrough beginning outside the property and smoothly entering through the front door. The camera should move naturally and continuously through the entire home in one uninterrupted path, revealing each space in a logical order.
 
 Follow the reference images in the exact order provided:
 
@@ -24,31 +24,13 @@ Follow the reference images in the exact order provided:
 
 Begin at {{STARTING_LOCATION}} and continue through the visible rooms and connecting spaces in the specified sequence.
 
-Move at a slow, steady walking pace, as if filmed by a professional real estate videographer using a stabilized gimbal. Use realistic forward motion, gentle turns, natural doorway transitions, accurate depth, and consistent parallax.
-
-Preserve the property exactly as shown in the reference images, including its architecture, structural proportions, room dimensions, layouts, doors, windows, walls, ceilings, openings, furniture placement, decorations, colors, materials, textures, finishes, and lighting.
-
-Maintain consistent spatial relationships between consecutive reference images. Treat every reference image as a fixed visual constraint, not as general creative inspiration.
-
-When a connection between two spaces is not clearly visible, create only the shortest plausible neutral transition. Do not invent additional rooms, doors, windows, corridors, staircases, furniture, architectural features, exterior views, or decorations.
-
-The camera must remain at a realistic human eye level. Keep the movement grounded and physically plausible. Move naturally through hallways, around corners, through visible doorways, and between rooms without crossing walls, furniture, or solid objects.
+Preserve the exact architecture, room layouts, furniture placement, decor, colors, materials, and lighting from the reference images. Move confidently through hallways, around corners, through doorways, and between rooms as if filmed by a professional real estate videographer using a stabilized gimbal. Maintain consistent spatial relationships and realistic room connections. Prioritize accurate navigation of the property over cinematic effects. Bright, inviting atmosphere, photorealistic quality, realistic depth and parallax.
 
 Follow these user-provided transition instructions whenever they are compatible with the visible references:
 
 {{TRANSITION_INSTRUCTIONS}}
 
-Prioritize, in this order:
-
-1. visual fidelity to the reference photos;
-2. preservation of the property’s architecture and contents;
-3. spatial and temporal consistency;
-4. realistic camera navigation;
-5. smoothness and visual quality.
-
-Create a bright, inviting, premium real estate presentation with photorealistic detail, realistic perspective, stable geometry, natural depth, and subtle cinematic polish.
-
-The final result should feel like physically walking through the real property in one seamless tour.`;
+No cuts, no teleporting between rooms, no floating camera, no people, no text, no added objects, no redesigned spaces, no hallucinated features, no distortion, and no camera shake. Create the feeling of physically walking through a luxury Airbnb from the exterior to every major interior space in a seamless tour.`;
 const segmentTemplate=`Create a photorealistic, continuous first-person real estate camera movement from the source reference image to the destination reference image.
 
 Source space: {{SOURCE_ROOM}}
